@@ -1,20 +1,13 @@
-import {
-  BadRequestException,
-  forwardRef,
-  Inject,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { CreateUserDto } from '../user/dto/create-user.dto';
-import { UserService } from '../user/user.service';
 import * as bcrypt from 'bcrypt';
 import { firstValueFrom } from 'rxjs';
+import { UserService } from '../user/user.service';
 import { AuthUserDto } from './dto/auth-user.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @Inject(forwardRef(() => UserService))
     private userService: UserService,
     private jwtTokenService: JwtService,
   ) {}
@@ -31,8 +24,16 @@ export class AuthService {
     return null;
   }
 
-  async loginUser(user: any) {
-    const payload = { username: user.username, sub: user.id };
+  async loginUser(user: AuthUserDto) {
+    const validUser = await this.validateUser({
+      username: user.username,
+      password: user.password,
+    });
+    if (!validUser) {
+      throw new BadRequestException('Invalid credentials.');
+    }
+
+    const payload = { username: validUser.username, sub: validUser.id };
 
     return {
       access_token: this.jwtTokenService.sign(payload),

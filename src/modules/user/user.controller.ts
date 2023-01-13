@@ -34,7 +34,6 @@ import { DeleteResponseDto } from 'src/dtos/delete-response.dto';
 export class UserController {
   constructor(
     private readonly userService: UserService,
-    @Inject(forwardRef(() => AuthService))
     private readonly authService: AuthService,
   ) {}
 
@@ -65,14 +64,7 @@ export class UserController {
   @HttpCode(HttpStatus.OK)
   @Post('login')
   async loginUser(@Body() userDto: AuthUserDto) {
-    const user = await firstValueFrom(
-      this.userService.findUserByUsername(userDto.username),
-    );
-    if (!user)
-      throw new NotFoundException(
-        `No such user exists by username=${userDto.username}`,
-      );
-    return this.authService.loginUser(user);
+    return this.authService.loginUser(userDto);
   }
 
   @ApiOkResponse({ type: UpdateResponseDto })
